@@ -151,7 +151,9 @@ export default function LinksPage() {
                             <DialogContent>
                               <DialogHeader><DialogTitle>QR Code</DialogTitle></DialogHeader>
                               <div className="flex justify-center p-4">
-                                <QRCodeSVG value={link.shortUrl} size={256} />
+                                <div className="p-4 bg-white rounded-xl shadow-inner inline-block">
+                                  <QRCodeSVG value={link.shortUrl} size={256} bgColor="#ffffff" fgColor="#000000" />
+                                </div>
                               </div>
                             </DialogContent>
                           </Dialog>

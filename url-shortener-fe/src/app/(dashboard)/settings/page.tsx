@@ -162,7 +162,7 @@ export default function SettingsPage() {
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
                       <div className="p-4 bg-white rounded-xl shadow-sm border border-zinc-100 flex items-center justify-center">
-                        <QRCodeSVG value={setupData.qrCodeUrl} size={180} />
+                        <QRCodeSVG value={setupData.qrCodeUrl} size={180} bgColor="#ffffff" fgColor="#000000" />
                       </div>
                       <p className="mt-4 text-xs font-mono text-zinc-500 text-center select-all">
                         {t("settings.mfaSecretKey")}: {setupData.secret}

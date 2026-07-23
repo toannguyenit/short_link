@@ -110,7 +110,9 @@ export default function ShortenPage() {
                     <DialogTitle>QR Code</DialogTitle>
                   </DialogHeader>
                   <div className="flex justify-center p-4">
-                    <QRCodeSVG value={result.shortUrl} size={256} />
+                    <div className="p-4 bg-white rounded-xl shadow-inner inline-block">
+                      <QRCodeSVG value={result.shortUrl} size={256} bgColor="#ffffff" fgColor="#000000" />
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
