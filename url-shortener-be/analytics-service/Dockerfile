@@ -9,6 +9,7 @@ COPY analytics-service/pom.xml analytics-service/
 COPY api-gateway/pom.xml api-gateway/
 RUN mvn dependency:go-offline -B -pl analytics-service -am || true
 COPY . .
+RUN mkdir -p data/geoip && [ -f data/geoip/GeoLite2-City.mmdb ] || touch data/geoip/GeoLite2-City.mmdb
 RUN mvn package -pl analytics-service -am -DskipTests -B
 
 FROM eclipse-temurin:21-jre-alpine
