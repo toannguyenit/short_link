@@ -32,7 +32,7 @@ jobs:
 
             echo "---> Synchronizing deployment configurations..."
             mkdir -p data/geoip
-            cp -r url-shortener-be/deploy/* ./
+            cp -r url-shortener-be/deploy/app url-shortener-be/deploy/infra url-shortener-be/deploy/nginx url-shortener-be/deploy/infra-up.sh ./
             
             echo "---> Writing production .env configuration..."
             echo "DOMAIN=urlshort.toannguyenit.com" > .env
