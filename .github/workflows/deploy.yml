@@ -76,8 +76,11 @@ jobs:
             chmod +x infra-up.sh
             ./infra-up.sh
             
-            echo "---> Starting application services..."
             docker compose --env-file .env -f app/docker-compose.yml up -d --remove-orphans
+            
+            echo "---> Waiting for services to initialize and restarting Nginx..."
+            sleep 5
+            docker restart urlshortener-nginx || true
             
             echo "---> Pruning unused docker images..."
             docker image prune -f

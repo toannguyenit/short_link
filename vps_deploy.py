@@ -131,6 +131,9 @@ NGINX_HTTPS_PORT=443
         # 9. Start application services
         run_cmd("docker compose --env-file /opt/url-shortener/.env -f /opt/url-shortener/app/docker-compose.yml up -d --remove-orphans", "Starting application services")
 
+        # Reload Nginx DNS resolution
+        run_cmd("sleep 5 && docker restart urlshortener-nginx || true", "Restarting Nginx to reload upstream IPs")
+
         # 9. Prune old unused docker resources to save space
         run_cmd("docker image prune -f", "Pruning old docker images")
 
