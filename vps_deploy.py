@@ -99,6 +99,7 @@ NGINX_HTTPS_PORT=443
             "docker build -t ghcr.io/toannguyenit/url-shortener-fe:latest "
             "--build-arg NEXT_PUBLIC_API_URL=https://api-urlshort.toannguyenit.com "
             "--build-arg NEXT_PUBLIC_SHORT_URL_BASE=https://go-urlshort.toannguyenit.com "
+            "--build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com "
             "-f /opt/url-shortener/url-shortener-fe/Dockerfile /opt/url-shortener/url-shortener-fe"
         )
         run_cmd(fe_build_cmd, "Building frontend image")
