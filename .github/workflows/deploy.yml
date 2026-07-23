@@ -1,0 +1,154 @@
+name: Deploy URL Shortener
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'DEPLOY.md'
+      - 'ARCHITECTURE.md'
+      - 'walkthrough.md'
+      - 'task.md'
+      - 'ai-history/**'
+      - '.agents/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: actions/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Convert owner to lowercase
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> ${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+      # Build and push Backend microservices
+      - name: Build and push Auth Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./url-shortener-be
+          file: ./url-shortener-be/auth-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-auth:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push URL Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./url-shortener-be
+          file: ./url-shortener-be/url-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-url:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Redirect Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./url-shortener-be
+          file: ./url-shortener-be/redirect-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-redirect:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Analytics Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./url-shortener-be
+          file: ./url-shortener-be/analytics-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-analytics:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push API Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: ./url-shortener-be
+          file: ./url-shortener-be/api-gateway/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-gateway:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build and push Next.js Frontend
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./url-shortener-fe
+          file: ./url-shortener-fe/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api-urlshort.toannguyenit.com
+            NEXT_PUBLIC_SHORT_URL_BASE=https://go-urlshort.toannguyenit.com
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com
+          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-fe:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Deploy on VPS via SSH
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd /opt/url-shortener
+            
+            # Sync docker files from the cloned repository
+            git pull origin main
+            
+            # Write/update remote .env file on VPS using secrets
+            cat << 'EOF' > .env
+            DOMAIN=urlshort.toannguyenit.com
+            API_URL=https://api-urlshort.toannguyenit.com
+            SHORT_URL_BASE=https://go-urlshort.toannguyenit.com
+            FRONTEND_URL=https://urlshort.toannguyenit.com
+            JWT_SECRET=supersecretjwtkeyholdingfortyeeightbytesvalueforsecurity
+            GHCR_OWNER=${{ env.OWNER_LC }}
+            IMAGE_TAG=latest
+            MONGO_DB=urlshortener
+            RABBITMQ_USER=urlshortener
+            RABBITMQ_PASSWORD=urlshortenerpwd
+            RABBITMQ_VHOST=urlshortener
+            GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com
+            NGINX_HTTP_PORT=80
+            NGINX_HTTPS_PORT=443
+            EOF
+            
+            # Pull the newly pushed docker images from GHCR
+            docker compose --env-file .env -f app/docker-compose.yml pull
+            
+            # Deploy database infrastructure if not running
+            chmod +x infra-up.sh
+            ./infra-up.sh
+            
+            # Start application services
+            docker compose --env-file .env -f app/docker-compose.yml up -d --remove-orphans
+            
+            # Clean up old unused images
+            docker image prune -f
