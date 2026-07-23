@@ -1,5 +1,6 @@
 "use client";
 
+// CI/CD Pipeline Verification: Build directly on VPS
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
