@@ -12,6 +12,7 @@ import {
   Settings,
   Sun,
   Moon,
+  Laptop,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { BrandLogo } from "@/components/brand-logo";
@@ -39,7 +40,37 @@ export function Sidebar() {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    if (theme === "system") {
+      setTheme("light");
+    } else if (theme === "light") {
+      setTheme("dark");
+    } else {
+      setTheme("system");
+    }
+  };
+
+  const getThemeIcon = () => {
+    if (!mounted) return <Moon className="h-4 w-4" />;
+    switch (theme) {
+      case "dark":
+        return <Moon className="h-4 w-4" />;
+      case "light":
+        return <Sun className="h-4 w-4" />;
+      default:
+        return <Laptop className="h-4 w-4" />;
+    }
+  };
+
+  const getThemeLabel = () => {
+    if (!mounted) return t("theme.dark");
+    switch (theme) {
+      case "dark":
+        return t("theme.dark");
+      case "light":
+        return t("theme.light");
+      default:
+        return t("theme.system");
+    }
   };
 
   const navItems = [
@@ -88,8 +119,8 @@ export function Sidebar() {
           className="w-full justify-start gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800" 
           onClick={toggleTheme}
         >
-          {mounted && theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {mounted && theme === "dark" ? t("theme.light") : t("theme.dark")}
+          {getThemeIcon()}
+          {getThemeLabel()}
         </Button>
         <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogout}>
           <LogOut className="h-4 w-4" />
