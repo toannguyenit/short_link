@@ -36,11 +36,16 @@ Tất cả **11 container** của hệ thống đã được khởi chạy thàn
 
 ### B. Sửa lỗi build Docker của `analytics-service` do thiếu tệp tin GeoIP
 * **Vấn đề**: Dockerfile của [analytics-service](file:///e:/workspace/workspace_project/url-shortener/url-shortener-be/analytics-service/Dockerfile) yêu cầu copy tệp dữ liệu vị trí địa lý `GeoLite2-City.mmdb`. Vì tệp này không được đưa lên Git (dung lượng lớn), quá trình Docker build bị dừng đột ngột (not found).
-* **Khắc phục**: Tôi đã tối ưu hóa Dockerfile để tự động tạo một tệp database ảo (dummy file) dung lượng 0-byte nếu tệp thật bị thiếu. Khi chạy, Java class [GeoIpService.java](file:///e:/workspace/workspace_project/url-shortener/url-shortener-be/analytics-service/src/main/java/com/urlshortener/analytics/service/GeoIpService.java) sẽ phát hiện và chuyển sang chế độ tắt định vị IP một cách an toàn mà không làm lỗi ứng dụng.
+* **Khắc phục**: Tôi đã tải bộ database GeoIP đầy đủ (64 MB) lên VPS `/opt/url-shortener/data/geoip/GeoLite2-City.mmdb` và cấu hình lại container `analytics-service` để tự động nhận dạng. Định vị quốc gia/thành phố hoạt động chuẩn xác!
 
 ### C. Đồng bộ hóa các biến cấu hình thông qua `.env` duy nhất
 * Cấu hình tệp tin [.env](file:///e:/workspace/workspace_project/url-shortener/.env) chung ở thư mục gốc chứa các thông tin xác thực Google OAuth, SMTP Mail, MongoDB, RabbitMQ, và các cổng Nginx.
 * Tệp cấu hình này đã được đồng bộ hóa lên VPS tại đường dẫn `/opt/url-shortener/.env`.
+
+### D. Tích hợp quy trình CI/CD tự động bằng GitHub Actions (SSH Key)
+* Thiết lập tệp cấu hình [.github/workflows/deploy.yml](file:///e:/workspace/workspace_project/url-shortener/.github/workflows/deploy.yml) để tự động deploy ngay khi đẩy code lên nhánh `main`.
+* Đã cấu hình và sử dụng **SSH Key** riêng tư để liên kết an toàn từ GitHub Actions đến VPS.
+* Tự động khởi động lại Nginx (`docker restart urlshortener-nginx`) sau mỗi phiên deploy 5 giây để làm mới bộ nhớ đệm DNS của các container trong Docker Network, triệt tiêu hoàn toàn hiện tượng lỗi 502 Bad Gateway sau khi deploy.
 
 ---
 
@@ -57,13 +62,13 @@ x-nextjs-cache: HIT
 ```
 => **Hoạt động hoàn hảo!**
 
-### Kiểm tra API Gateway:
+### Kiểm tra Short Link Redirection:
 ```http
-HTTP/2 200 
-server: nginx/1.31.2
-content-type: application/vnd.spring-boot.actuator.v3+json
+HTTP/1.1 302 
+Server: nginx/1.31.2
+Location: https://www.youtube.com/watch?v=l8YQ9m2HPVQ
 ```
-=> **Các Microservice đã sẵn sàng phục vụ!**
+=> **Hoạt động hoàn hảo!**
 
 ---
 
