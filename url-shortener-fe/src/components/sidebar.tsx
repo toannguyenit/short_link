@@ -1,6 +1,6 @@
 "use client";
 
-import type React from "react";
+import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -9,32 +9,50 @@ import {
   LayoutDashboard,
   LogOut,
   Scissors,
+  Settings,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { clearTokens, getUser } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/shorten", label: "Shorten URL", icon: Scissors },
-  { href: "/links", label: "My Links", icon: Link2 },
-];
+import { useI18n } from "@/components/i18n-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const user = getUser();
+  const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     clearTokens();
     router.push("/login");
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const navItems = [
+    { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/shorten", label: t("nav.shorten"), icon: Scissors },
+    { href: "/links", label: t("nav.links"), icon: Link2 },
+    { href: "/settings", label: t("nav.settings"), icon: Settings },
+  ];
+
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex h-16 items-center border-b border-zinc-200 px-6 dark:border-zinc-800">
-        <BrandLogo size="sm" />
+    <aside className="flex h-screen w-64 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex h-16 items-center px-6">
+        <BrandLogo />
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navItems.map((item) => {
@@ -57,14 +75,25 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
-        <div className="mb-3 px-3">
+      <div className="border-t border-zinc-200 p-4 dark:border-zinc-800 space-y-2">
+        <div className="mb-2 px-3">
           <p className="text-sm font-medium">{user?.name || "User"}</p>
           <p className="text-xs text-zinc-500">{user?.email}</p>
         </div>
+        <div className="w-full flex justify-start">
+          <LanguageSwitcher />
+        </div>
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800" 
+          onClick={toggleTheme}
+        >
+          {mounted && theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {mounted && theme === "dark" ? t("theme.light") : t("theme.dark")}
+        </Button>
         <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogout}>
           <LogOut className="h-4 w-4" />
-          Logout
+          {t("nav.logout")}
         </Button>
       </div>
     </aside>

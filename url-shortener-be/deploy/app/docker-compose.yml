@@ -14,6 +14,7 @@ services:
       MONGO_PORT: 27017
       MONGO_DB: ${MONGO_DB:-urlshortener}
       JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     networks:
       - urlshortener-net
 

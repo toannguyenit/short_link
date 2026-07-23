@@ -16,5 +16,6 @@ public class UserResponse {
     private UUID id;
     private String email;
     private String name;
+    private boolean mfaEnabled;
     private Instant createdAt;
 }

@@ -36,6 +36,14 @@ public class JwtService {
         return buildToken(userId, email, refreshTokenExpirationMs, "refresh");
     }
 
+    public String generateMfaToken(UUID userId, String email) {
+        return buildToken(userId, email, 300000, "mfa_pending");
+    }
+
+    public boolean isMfaToken(String token) {
+        return "mfa_pending".equals(parseToken(token).get("type", String.class));
+    }
+
     private String buildToken(UUID userId, String email, long expirationMs, String type) {
         Instant now = Instant.now();
         return Jwts.builder()

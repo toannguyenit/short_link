@@ -107,6 +107,13 @@ export const authApi = {
     api.post<AuthResponse>("/api/auth/register", data),
   login: (data: { email: string; password: string }) =>
     api.post<AuthResponse>("/api/auth/login", data),
+  googleLogin: (idToken: string) =>
+    api.post<AuthResponse>("/api/auth/google", { idToken }),
+  setup2Fa: () => api.post<{ secret: string; qrCodeUrl: string }>("/api/auth/2fa/setup"),
+  enable2Fa: (code: string) => api.post("/api/auth/2fa/enable", { code }),
+  disable2Fa: (code: string) => api.post("/api/auth/2fa/disable", { code }),
+  verify2Fa: (data: { mfaToken: string; code: string }) =>
+    api.post<AuthResponse>("/api/auth/2fa/verify", data),
   me: () => api.get("/api/auth/me"),
 };
 

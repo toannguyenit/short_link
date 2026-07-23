@@ -34,6 +34,38 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/google")
+    @Operation(summary = "Login with Google")
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.loginWithGoogle(request));
+    }
+
+    @PostMapping("/2fa/setup")
+    @Operation(summary = "Setup 2FA")
+    public ResponseEntity<MfaSetupResponse> setupMfa(@RequestHeader("X-User-Id") UUID userId) {
+        return ResponseEntity.ok(authService.setupMfa(userId));
+    }
+
+    @PostMapping("/2fa/enable")
+    @Operation(summary = "Enable 2FA")
+    public ResponseEntity<Void> enableMfa(@RequestHeader("X-User-Id") UUID userId, @Valid @RequestBody MfaCodeRequest request) {
+        authService.enableMfa(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/2fa/disable")
+    @Operation(summary = "Disable 2FA")
+    public ResponseEntity<Void> disableMfa(@RequestHeader("X-User-Id") UUID userId, @Valid @RequestBody MfaCodeRequest request) {
+        authService.disableMfa(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/2fa/verify")
+    @Operation(summary = "Verify 2FA code during login")
+    public ResponseEntity<AuthResponse> verifyMfa(@Valid @RequestBody MfaVerifyRequest request) {
+        return ResponseEntity.ok(authService.verifyMfaLogin(request));
+    }
+
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {

@@ -27,6 +27,14 @@ public class User {
 
     private String name;
 
+    private String authProvider;
+
+    private String googleId;
+
+    private boolean mfaEnabled;
+
+    private String mfaSecret;
+
     @CreatedDate
     private Instant createdAt;
 }

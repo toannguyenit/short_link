@@ -17,4 +17,6 @@ public class AuthResponse {
     private String name;
     private String accessToken;
     private String refreshToken;
+    private boolean mfaRequired;
+    private String mfaToken;
 }

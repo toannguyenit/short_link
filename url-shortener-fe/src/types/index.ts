@@ -11,6 +11,8 @@ export interface AuthResponse {
   name: string;
   accessToken: string;
   refreshToken: string;
+  mfaRequired?: boolean;
+  mfaToken?: string;
 }
 
 export interface UrlItem {

@@ -9,3 +9,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Environments
+.env
+.env.local
+
+# SSH helper scripts
+ssh_run.py
+ssh_test.py
+ssh_test_keys.py
+ssh_write_env.py
