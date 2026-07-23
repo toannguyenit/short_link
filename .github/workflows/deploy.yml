@@ -14,103 +14,11 @@ on:
       - '.agents/**'
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Convert owner to lowercase
-        run: |
-          echo "OWNER_LC=${OWNER,,}" >> ${GITHUB_ENV}
-        env:
-          OWNER: '${{ github.repository_owner }}'
-
-      # Build and push Backend microservices
-      - name: Build and push Auth Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./url-shortener-be
-          file: ./url-shortener-be/auth-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-auth:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push URL Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./url-shortener-be
-          file: ./url-shortener-be/url-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-url:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Redirect Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./url-shortener-be
-          file: ./url-shortener-be/redirect-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-redirect:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Analytics Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./url-shortener-be
-          file: ./url-shortener-be/analytics-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-analytics:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push API Gateway
-        uses: docker/build-push-action@v5
-        with:
-          context: ./url-shortener-be
-          file: ./url-shortener-be/api-gateway/Dockerfile
-          push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-gateway:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Build and push Next.js Frontend
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./url-shortener-fe
-          file: ./url-shortener-fe/Dockerfile
-          push: true
-          build-args: |
-            NEXT_PUBLIC_API_URL=https://api-urlshort.toannguyenit.com
-            NEXT_PUBLIC_SHORT_URL_BASE=https://go-urlshort.toannguyenit.com
-            NEXT_PUBLIC_GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com
-          tags: ghcr.io/${{ env.OWNER_LC }}/url-shortener-fe:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Deploy on VPS via SSH
-      - name: Deploy to VPS
+      - name: Deploy to VPS via SSH (Local Build on VPS)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -119,17 +27,17 @@ jobs:
           script: |
             cd /opt/url-shortener
             
-            # Sync docker files from the cloned repository
+            echo "---> Pulling latest code from GitHub..."
             git pull origin main
             
-            # Write/update remote .env file on VPS using secrets
+            echo "---> Writing production .env configuration..."
             cat << 'EOF' > .env
             DOMAIN=urlshort.toannguyenit.com
             API_URL=https://api-urlshort.toannguyenit.com
             SHORT_URL_BASE=https://go-urlshort.toannguyenit.com
             FRONTEND_URL=https://urlshort.toannguyenit.com
             JWT_SECRET=supersecretjwtkeyholdingfortyeeightbytesvalueforsecurity
-            GHCR_OWNER=${{ env.OWNER_LC }}
+            GHCR_OWNER=toannguyenit
             IMAGE_TAG=latest
             MONGO_DB=urlshortener
             RABBITMQ_USER=urlshortener
@@ -140,15 +48,39 @@ jobs:
             NGINX_HTTPS_PORT=443
             EOF
             
-            # Pull the newly pushed docker images from GHCR
-            docker compose --env-file .env -f app/docker-compose.yml pull
+            echo "---> Building Auth Service..."
+            docker build -t ghcr.io/toannguyenit/url-shortener-auth:latest -f url-shortener-be/auth-service/Dockerfile url-shortener-be
             
-            # Deploy database infrastructure if not running
+            echo "---> Building URL Service..."
+            docker build -t ghcr.io/toannguyenit/url-shortener-url:latest -f url-shortener-be/url-service/Dockerfile url-shortener-be
+            
+            echo "---> Building Redirect Service..."
+            docker build -t ghcr.io/toannguyenit/url-shortener-redirect:latest -f url-shortener-be/redirect-service/Dockerfile url-shortener-be
+            
+            echo "---> Building Analytics Service..."
+            docker build -t ghcr.io/toannguyenit/url-shortener-analytics:latest -f url-shortener-be/analytics-service/Dockerfile url-shortener-be
+            
+            echo "---> Building API Gateway..."
+            docker build -t ghcr.io/toannguyenit/url-shortener-gateway:latest -f url-shortener-be/api-gateway/Dockerfile url-shortener-be
+            
+            echo "---> Building Next.js Frontend..."
+            docker build -t ghcr.io/toannguyenit/url-shortener-fe:latest \
+              --build-arg NEXT_PUBLIC_API_URL=https://api-urlshort.toannguyenit.com \
+              --build-arg NEXT_PUBLIC_SHORT_URL_BASE=https://go-urlshort.toannguyenit.com \
+              --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com \
+              -f url-shortener-fe/Dockerfile url-shortener-fe
+            
+            echo "---> Ensuring database infrastructure is running..."
             chmod +x infra-up.sh
             ./infra-up.sh
             
-            # Start application services
+            echo "---> Starting application services..."
             docker compose --env-file .env -f app/docker-compose.yml up -d --remove-orphans
             
-            # Clean up old unused images
+            echo "---> Pruning unused docker images..."
             docker image prune -f
+            
+            echo "---> Verifying running services..."
+            docker compose --env-file .env -f app/docker-compose.yml ps
+            
+            echo "DEPLOYMENT COMPLETE!"
