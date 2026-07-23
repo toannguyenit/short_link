@@ -29,6 +29,11 @@ jobs:
             
             echo "---> Pulling latest code from GitHub..."
             git pull origin main
+
+            echo "---> Synchronizing deployment configurations..."
+            mkdir -p app data/geoip
+            cp -r url-shortener-be/deploy/* app/
+            cp url-shortener-be/deploy/infra-up.sh ./
             
             echo "---> Writing production .env configuration..."
             cat << 'EOF' > .env
