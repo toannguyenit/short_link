@@ -36,21 +36,21 @@ jobs:
             
             echo "---> Writing production .env configuration..."
             cat << 'EOF' > .env
-            DOMAIN=urlshort.toannguyenit.com
-            API_URL=https://api-urlshort.toannguyenit.com
-            SHORT_URL_BASE=https://go-urlshort.toannguyenit.com
-            FRONTEND_URL=https://urlshort.toannguyenit.com
-            JWT_SECRET=supersecretjwtkeyholdingfortyeeightbytesvalueforsecurity
-            GHCR_OWNER=toannguyenit
-            IMAGE_TAG=latest
-            MONGO_DB=urlshortener
-            RABBITMQ_USER=urlshortener
-            RABBITMQ_PASSWORD=urlshortenerpwd
-            RABBITMQ_VHOST=urlshortener
-            GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com
-            NGINX_HTTP_PORT=80
-            NGINX_HTTPS_PORT=443
-            EOF
+DOMAIN=urlshort.toannguyenit.com
+API_URL=https://api-urlshort.toannguyenit.com
+SHORT_URL_BASE=https://go-urlshort.toannguyenit.com
+FRONTEND_URL=https://urlshort.toannguyenit.com
+JWT_SECRET=supersecretjwtkeyholdingfortyeeightbytesvalueforsecurity
+GHCR_OWNER=toannguyenit
+IMAGE_TAG=latest
+MONGO_DB=urlshortener
+RABBITMQ_USER=urlshortener
+RABBITMQ_PASSWORD=urlshortenerpwd
+RABBITMQ_VHOST=urlshortener
+GOOGLE_CLIENT_ID=751785349464-t67s34loabfj8ht1tak75hd2aq489lrr.apps.googleusercontent.com
+NGINX_HTTP_PORT=80
+NGINX_HTTPS_PORT=443
+EOF
             
             echo "---> Building Auth Service..."
             docker build -t ghcr.io/toannguyenit/url-shortener-auth:latest -f url-shortener-be/auth-service/Dockerfile url-shortener-be
