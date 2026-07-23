@@ -26,12 +26,13 @@ Tất cả **11 container** của hệ thống đã được khởi chạy thàn
 
 ## 2. Các Sửa Đổi & Tối Ưu Hóa Trong Quá Trình Deploy
 
-### A. Sửa lỗi `nginx.conf` chứa domain mẫu (`yourdomain.com`)
-* **Vấn đề**: File [nginx.conf](file:///e:/workspace/workspace_project/url-shortener/url-shortener-be/deploy/nginx/nginx.conf) ban đầu chứa domain mẫu `yourdomain.com`, khiến Nginx container bị crash vì không tìm thấy file chứng chỉ SSL tương ứng.
-* **Khắc phục**: Tôi đã cấu hình đồng bộ toàn bộ tên miền và đường dẫn chứng chỉ SSL thực tế của bạn:
-  * Trang chủ: `urlshort.toannguyenit.cloud`
-  * API Gateway: `api-urlshort.toannguyenit.cloud`
-  * Link rút gọn: `go-urlshort.toannguyenit.cloud`
+### A. Tự động cấp phát chứng chỉ SSL mới & Định cấu hình tên miền `.com`
+* Do tên miền cũ `.cloud` bị trình duyệt Brave/Safe Browsing cảnh báo giả mạo (do danh tiếng đuôi .cloud và AI chặn heuristic), bạn đã trỏ DNS của tên miền uy tín mới: `toannguyenit.com` về VPS.
+* Tôi đã sửa đổi cấu hình Nginx sang các tên miền mới:
+  * Trang chủ: `urlshort.toannguyenit.com`
+  * API Gateway: `api-urlshort.toannguyenit.com`
+  * Link rút gọn: `go-urlshort.toannguyenit.com`
+* Script `vps_deploy.py` được cải tiến để tự động phát hiện thiếu chứng chỉ SSL và chạy **Certbot Standalone** để lấy chứng chỉ Let's Encrypt SSL mới thành công từ máy chủ Let's Encrypt!
 
 ### B. Sửa lỗi build Docker của `analytics-service` do thiếu tệp tin GeoIP
 * **Vấn đề**: Dockerfile của [analytics-service](file:///e:/workspace/workspace_project/url-shortener/url-shortener-be/analytics-service/Dockerfile) yêu cầu copy tệp dữ liệu vị trí địa lý `GeoLite2-City.mmdb`. Vì tệp này không được đưa lên Git (dung lượng lớn), quá trình Docker build bị dừng đột ngột (not found).
